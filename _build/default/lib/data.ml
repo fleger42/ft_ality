@@ -10,4 +10,5 @@ type automaton = {
   starting_state : int;
   final_states: int list;
   transitions: transition list;
+  actual_state: int
 }

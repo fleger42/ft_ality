@@ -1,1 +1,1 @@
-let () = Parsing.parse "./grammars/basic.gmr"
+let () = Parsing.parse ()
