@@ -1,0 +1,9 @@
+package "parsing" (
+  directory = "parsing"
+  description = ""
+  requires = "core"
+  archive(byte) = "parsing.cma"
+  archive(native) = "parsing.cmxa"
+  plugin(byte) = "parsing.cma"
+  plugin(native) = "parsing.cmxs"
+)

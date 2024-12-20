@@ -1,0 +1,26 @@
+lib: [
+  "_build/install/default/lib/ft_ality/META"
+  "_build/install/default/lib/ft_ality/dune-package"
+  "_build/install/default/lib/ft_ality/opam"
+  "_build/install/default/lib/ft_ality/parsing/data.ml" {"parsing/data.ml"}
+  "_build/install/default/lib/ft_ality/parsing/parsing.a" {"parsing/parsing.a"}
+  "_build/install/default/lib/ft_ality/parsing/parsing.cma" {"parsing/parsing.cma"}
+  "_build/install/default/lib/ft_ality/parsing/parsing.cmi" {"parsing/parsing.cmi"}
+  "_build/install/default/lib/ft_ality/parsing/parsing.cmt" {"parsing/parsing.cmt"}
+  "_build/install/default/lib/ft_ality/parsing/parsing.cmx" {"parsing/parsing.cmx"}
+  "_build/install/default/lib/ft_ality/parsing/parsing.cmxa" {"parsing/parsing.cmxa"}
+  "_build/install/default/lib/ft_ality/parsing/parsing.ml" {"parsing/parsing.ml"}
+  "_build/install/default/lib/ft_ality/parsing/parsing__.cmi" {"parsing/parsing__.cmi"}
+  "_build/install/default/lib/ft_ality/parsing/parsing__.cmt" {"parsing/parsing__.cmt"}
+  "_build/install/default/lib/ft_ality/parsing/parsing__.cmx" {"parsing/parsing__.cmx"}
+  "_build/install/default/lib/ft_ality/parsing/parsing__.ml" {"parsing/parsing__.ml"}
+  "_build/install/default/lib/ft_ality/parsing/parsing__Data.cmi" {"parsing/parsing__Data.cmi"}
+  "_build/install/default/lib/ft_ality/parsing/parsing__Data.cmt" {"parsing/parsing__Data.cmt"}
+  "_build/install/default/lib/ft_ality/parsing/parsing__Data.cmx" {"parsing/parsing__Data.cmx"}
+]
+libexec: [
+  "_build/install/default/lib/ft_ality/parsing/parsing.cmxs" {"parsing/parsing.cmxs"}
+]
+bin: [
+  "_build/install/default/bin/ft_ality"
+]

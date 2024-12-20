@@ -1,0 +1,1 @@
+let () = Parsing.parse "./grammars/basic.gmr"

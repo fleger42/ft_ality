@@ -1,0 +1,9 @@
+left:Left
+right:Right
+up:Up
+down:Down
+q:HP
+s:LP
+-
+HP,LP,Down:Backflip Kick
+HP,HP,LP:Head Smash

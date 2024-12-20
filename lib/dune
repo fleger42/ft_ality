@@ -1,0 +1,5 @@
+(library
+ (name parsing)
+ (public_name ft_ality.parsing)
+ (libraries core)
+ (modules parsing data))

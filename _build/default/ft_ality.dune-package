@@ -1,0 +1,53 @@
+(lang dune 3.17)
+(name ft_ality)
+(sections (lib .) (libexec .) (bin ../../bin))
+(files
+ (lib
+  (META
+   dune-package
+   opam
+   parsing/data.ml
+   parsing/parsing.a
+   parsing/parsing.cma
+   parsing/parsing.cmi
+   parsing/parsing.cmt
+   parsing/parsing.cmx
+   parsing/parsing.cmxa
+   parsing/parsing.ml
+   parsing/parsing__.cmi
+   parsing/parsing__.cmt
+   parsing/parsing__.cmx
+   parsing/parsing__.ml
+   parsing/parsing__Data.cmi
+   parsing/parsing__Data.cmt
+   parsing/parsing__Data.cmx))
+ (libexec (parsing/parsing.cmxs))
+ (bin (ft_ality)))
+(library
+ (name ft_ality.parsing)
+ (kind normal)
+ (archives (byte parsing/parsing.cma) (native parsing/parsing.cmxa))
+ (plugins (byte parsing/parsing.cma) (native parsing/parsing.cmxs))
+ (native_archives parsing/parsing.a)
+ (requires core)
+ (main_module_name Parsing)
+ (modes byte native)
+ (modules
+  (wrapped
+   (group
+    (alias
+     (obj_name parsing__)
+     (visibility public)
+     (kind alias)
+     (source (path Parsing__) (impl (path parsing/parsing__.ml-gen))))
+    (name Parsing)
+    (modules
+     (module
+      (obj_name parsing__Data)
+      (visibility public)
+      (source (path Data) (impl (path parsing/data.ml))))
+     (module
+      (obj_name parsing)
+      (visibility public)
+      (source (path Parsing) (impl (path parsing/parsing.ml))))))
+   (wrapped true))))
