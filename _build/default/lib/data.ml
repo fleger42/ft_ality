@@ -6,9 +6,9 @@ type transition = {
 
 type automaton = {
   alphabet: string list;
-  states: int list;
   starting_state : int;
-  final_states: int list;
+  states: int list;
+  final_states: (int * string) list;
   transitions: transition list;
   actual_state: int
 }
