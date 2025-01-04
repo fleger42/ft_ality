@@ -14,7 +14,7 @@ type automaton = {
   starting_state : int;
   states: int list;
   final_states: (int * string) list;
-  transitions: Transition.transition list; (* Use the module type here *)
+  transitions: Transition.transition list;
   actual_state: int
 }
 
@@ -40,20 +40,6 @@ let anon_fun arg =
   | "" -> args_value := arg
   | _ -> ()
 
-  let parse_combo_state_mapping lines =
-    let rec parse lines acc =
-      match lines with
-      | [] -> acc  (* End of input, return accumulated result *)
-      | line :: rest ->
-          if line = "-" then acc  (* Return result once "-" is encountered *)
-          else if line = "" then parse rest acc  (* Skip empty lines *)
-          else
-            let parts = String.split_on_char ':' line in
-            match parts with
-            | [key; state] -> parse rest ((key, state) :: acc)  (* Parse and add key-state pair *)
-            | _ -> parse rest acc  (* Ignore malformed lines *)
-    in
-    List.rev (parse lines [])  (* Return result in correct order *)
 
   let parse_key_state_mapping lines =
     let rec parse lines acc =
@@ -71,9 +57,9 @@ let anon_fun arg =
             | _ -> parse rest acc
     in
     parse lines []
-  
+
   (* Parse the transition part of the input (sequences and resulting states) *)
-  (*let rec parse_transitions lines =
+ (*let rec parse_transitions lines =
     match lines with
     | [] -> List.rev acc
     | line :: rest ->
@@ -96,22 +82,46 @@ let anon_fun arg =
               in
               parse_transitions rest ({actual_state = int_of_string actual_state; key_pressed = key_seq; next_state} :: acc)
           | _ -> parse_transitions rest acc*)
-  
   let get_automaton_alphabet state_map = 
       List.map (fun (s1, _) -> s1) state_map
 
+  let extract_after_dash data =
+  let rec aux seen_dash = function
+    | [] -> []  (* If list is empty, return empty list *)
+    | "-" :: rest -> aux true rest  (* Mark when "-" is found *)
+    | head :: rest when seen_dash -> head :: aux seen_dash rest  (* Collect elements after "-" *)
+    | _ :: rest -> aux seen_dash rest  (* Skip until "-" is found *)
+  in
+  aux false data
+
+  let parse_input input =
+  (* Split the input by new lines first, as the input is multiline *)
+  (* Split each line by ":" to separate the action from the description *)
+  let split_lines = List.map (fun line ->
+    match String.split_on_char ':' line with
+    | [action; _] -> String.split_on_char ',' action
+    | _ -> []
+  ) input in
+  split_lines
+
+  let print_string_list_list lst =
+  lst |> List.iter (fun sublist ->
+    sublist |> List.iter (fun str -> print_string str; print_string " ");
+    print_newline ()  (* Print a newline after each sublist *)
+  )
   let create_automaton input_lines =
     
     let state_map = parse_key_state_mapping input_lines in
-    let combo_map = parse_combo_state_mapping input_lines in
-    ignore combo_map;
+    let after_dash = extract_after_dash input_lines in
+    let combo_map = parse_input after_dash in
+    print_string_list_list combo_map;
     {
       alphabet = get_automaton_alphabet state_map;
       starting_state = 0;
       actual_state = 0;
-    
-      states = [0]; (* Hardcoded states for now, should be inferred *)
-      final_states = [(0, "final_states")]; (* Hardcoded final state *)
+      (* need to finish*)
+      states = [0];
+      final_states = [(0, "final_states")];
       transitions = [
         { Transition.actual_state = 0; Transition.key_pressed = "a"; Transition.next_state = 1 };
         { Transition.actual_state = 1; Transition.key_pressed = "b"; Transition.next_state = 2 };
@@ -175,18 +185,21 @@ let anon_fun arg =
   let print_automaton_final_state automaton =
     Printf.printf "Final states: %s\n"
     (String.concat ", "
-    (List.map (fun (s, label) -> Printf.sprintf "(%d, %s)" s label) automaton.final_states));
-    Printf.printf "Transitions:\n"
+    (List.map (fun (s, label) -> Printf.sprintf "(%d, %s)" s label) automaton.final_states))
 
   let print_automaton_transitions automaton =
+    Printf.printf "Transitions:\n";
     List.iter Transition.print automaton.transitions
   let print_automaton_data automaton =
+    Printf.printf "Automaton data:\n";
+    Printf.printf "---------------------------\n";
     print_automaton_alphabet automaton;
     print_automaton_states automaton;
     print_automaton_starting_state automaton;
     print_automaton_final_state automaton;
     print_automaton_actual_state automaton;
-    print_automaton_transitions automaton
+    print_automaton_transitions automaton;
+    Printf.printf "---------------------------\n"
       
 let parse () =
   Arg.parse speclist anon_fun usage_msg;
