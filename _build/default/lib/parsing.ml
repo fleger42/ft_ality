@@ -5,7 +5,7 @@ module Transition = struct
     next_state: int;
   }
   let print (transition: transition) =
-    Printf.printf "  actual_state: %d, key_pressed: %s, next_state: %d\n"
+    Printf.printf "(%d %s %d);\n"
       transition.actual_state transition.key_pressed transition.next_state
 end
 
@@ -17,6 +17,7 @@ type automaton = {
   transitions: Transition.transition list;
   actual_state: int
 }
+module TransitionMap = Map.Make(struct type t = int * string let compare = compare end)
 
 let usage_msg =
   "usage: ft_ality [-h] grammarfile
@@ -27,6 +28,36 @@ let usage_msg =
     -h                show this help message and exit"
 
 let args_value = ref ""
+
+let print_automaton_alphabet automaton =
+  Printf.printf "Alphabet: %s\n" (String.concat ", " automaton.alphabet)
+
+let print_automaton_states automaton =
+  Printf.printf "States: %s\n" (String.concat ", " (List.map string_of_int automaton.states))
+
+let print_automaton_starting_state automaton =
+  Printf.printf "Starting state: %d\n" automaton.starting_state
+
+let print_automaton_actual_state automaton =
+  Printf.printf "Actual state: %d\n" automaton.actual_state
+let print_automaton_final_state automaton =
+  Printf.printf "Final states: %s\n"
+  (String.concat ", "
+  (List.map (fun (s, label) -> Printf.sprintf "(%d, %s)" s label) automaton.final_states))
+
+let print_automaton_transitions automaton =
+  Printf.printf "Transitions:\n";
+  List.iter Transition.print automaton.transitions
+let print_automaton_data automaton =
+  Printf.printf "Automaton data:\n";
+  Printf.printf "---------------------------\n";
+  print_automaton_alphabet automaton;
+  print_automaton_states automaton;
+  print_automaton_starting_state automaton;
+  print_automaton_final_state automaton;
+  print_automaton_actual_state automaton;
+  print_automaton_transitions automaton;
+  Printf.printf "---------------------------\n"
 
 let speclist =
   [
@@ -58,30 +89,6 @@ let anon_fun arg =
     in
     parse lines []
 
-  (* Parse the transition part of the input (sequences and resulting states) *)
- (*let rec parse_transitions lines =
-    match lines with
-    | [] -> List.rev acc
-    | line :: rest ->
-        (* Ignore empty lines *)
-        if line = "" then parse_transitions rest acc
-        else
-          (* Parse transition line in format: key_sequence:resulting_state *)
-          let parts = String.split_on_char ':' line in
-          List.iter print_endline parts;
-          match parts with
-          | [key_seq; result_state] ->
-            (* Split the sequence by commas *)
-            let keys = String.split_on_char ':' key_seq in
-            let next_state = int_of_string result_state in
-              (* Find the actual state for each key in the sequence *)
-              let actual_state = 
-                try
-                  List.assoc (List.hd keys) state_map (* Assume the first key corresponds to the initial state *)
-                with Not_found -> "unknown" (* Error handling if key is not found *)
-              in
-              parse_transitions rest ({actual_state = int_of_string actual_state; key_pressed = key_seq; next_state} :: acc)
-          | _ -> parse_transitions rest acc*)
   let get_automaton_alphabet state_map = 
       List.map (fun (s1, _) -> s1) state_map
 
@@ -109,12 +116,57 @@ let anon_fun arg =
     sublist |> List.iter (fun str -> print_string str; print_string " ");
     print_newline ()  (* Print a newline after each sublist *)
   )
+
+  let print_state_map state_map =
+    Printf.printf "State map:\n";
+    TransitionMap.iter (fun (state, key) next_state ->
+      Printf.printf "{{State: %d, Key: \"%s\" -> Next State: %d}}\n" state key next_state
+    ) state_map;
+    Printf.printf "-------\n"
+
+    let transitions_from_sequence sequence max_state =
+      let rec aux current_state max_state acc state_map = function
+        | [] -> 
+            List.rev acc, state_map, max_state  (* Return transitions, map, and largest state *)
+        | key :: rest ->
+            (* Print the current state map to debug *)
+            print_state_map state_map;
+            Printf.printf "Looking up (%d, \"%s\") in state_map\n" current_state key;
+      
+            (* Check if the combination (current_state, key) already exists in the map *)
+            let next_state, updated_map, updated_max =
+              match TransitionMap.find_opt (current_state, key) state_map with
+              | Some next -> 
+                  Printf.printf "Found\n"; (* Debugging line to confirm the state was found *)
+                  next, state_map, max_state  (* Reuse the next_state and modify if necessary *)
+              | None ->  (* Otherwise, create a new state: largest_state + 1 *)
+                  Printf.printf "Not found, creating new state\n"; 
+                  let next = max_state + 1 in
+                  next, TransitionMap.add (current_state, key) next state_map, next
+            in
+            let transition = {Transition.actual_state = current_state; key_pressed = key; next_state} in
+            aux next_state updated_max (transition :: acc) updated_map rest
+      in
+      let transitions, _, max_state = aux 0 max_state [] TransitionMap.empty sequence in
+      transitions, max_state  (* Return both transitions and updated max_state *)
+    
+    let transitions_from_sequences sequences =
+      let _, transitions, _ =
+        List.fold_left (fun (acc_map, acc_transitions, max_state) sequence ->
+          let transitions, updated_max_state = transitions_from_sequence sequence max_state in
+          let _ = fst (transitions_from_sequence sequence max_state) in
+          acc_map, List.rev_append transitions acc_transitions, updated_max_state
+        ) (TransitionMap.empty, [], 0) sequences
+      in
+      List.rev transitions
+
   let create_automaton input_lines =
     
     let state_map = parse_key_state_mapping input_lines in
     let after_dash = extract_after_dash input_lines in
     let combo_map = parse_input after_dash in
-    print_string_list_list combo_map;
+    let transition_lists = transitions_from_sequences combo_map in
+    List.iter Transition.print transition_lists;
     {
       alphabet = get_automaton_alphabet state_map;
       starting_state = 0;
@@ -171,35 +223,6 @@ let anon_fun arg =
     | Sys_error msg -> 
         Printf.printf "Error opening file: %s\n" msg;
         exit 1
-  let print_automaton_alphabet automaton =
-    Printf.printf "Alphabet: %s\n" (String.concat ", " automaton.alphabet)
-
-  let print_automaton_states automaton =
-    Printf.printf "States: %s\n" (String.concat ", " (List.map string_of_int automaton.states))
-  
-  let print_automaton_starting_state automaton =
-    Printf.printf "Starting state: %d\n" automaton.starting_state
-
-  let print_automaton_actual_state automaton =
-    Printf.printf "Actual state: %d\n" automaton.actual_state
-  let print_automaton_final_state automaton =
-    Printf.printf "Final states: %s\n"
-    (String.concat ", "
-    (List.map (fun (s, label) -> Printf.sprintf "(%d, %s)" s label) automaton.final_states))
-
-  let print_automaton_transitions automaton =
-    Printf.printf "Transitions:\n";
-    List.iter Transition.print automaton.transitions
-  let print_automaton_data automaton =
-    Printf.printf "Automaton data:\n";
-    Printf.printf "---------------------------\n";
-    print_automaton_alphabet automaton;
-    print_automaton_states automaton;
-    print_automaton_starting_state automaton;
-    print_automaton_final_state automaton;
-    print_automaton_actual_state automaton;
-    print_automaton_transitions automaton;
-    Printf.printf "---------------------------\n"
       
 let parse () =
   Arg.parse speclist anon_fun usage_msg;
