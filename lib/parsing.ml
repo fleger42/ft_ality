@@ -18,6 +18,8 @@ type automaton = {
   actual_state: int
 }
 module TransitionMap = Map.Make(struct type t = int * string let compare = compare end)
+module IntMap = Map.Make(Int)
+module IntSet = Set.Make(Int)
 
 let usage_msg =
   "usage: ft_ality [-h] grammarfile
@@ -147,29 +149,65 @@ let anon_fun arg =
       in
       aux 0 max_state [] state_map sequence
     
-    let transitions_from_sequences sequences =
-      let _, transitions, _ =
-        List.fold_left (fun (acc_map, acc_transitions, max_state) sequence ->
-          let transitions, updated_map, updated_max_state = transitions_from_sequence sequence max_state acc_map in
-          updated_map, List.rev_append transitions acc_transitions, updated_max_state
-        ) (TransitionMap.empty, [], 0) sequences
-      in
-      List.rev transitions
+      let transitions_from_sequences sequences =
+        let _, transitions, max_states =
+          List.fold_left (fun (acc_map, acc_transitions, acc_max_states) sequence ->
+            let current_max_state = match acc_max_states with
+              | [] -> 0  (* Use 0 as the initial state if the list is empty *)
+              | hd :: _ -> hd  (* Otherwise, use the last maximum state *)
+            in
+            let transitions, updated_map, updated_max_state = transitions_from_sequence sequence current_max_state acc_map in
+            updated_map, List.rev_append transitions acc_transitions, updated_max_state :: acc_max_states
+          ) (TransitionMap.empty, [], []) sequences
+        in
+        List.rev transitions, List.rev max_states
     
-
+  let get_after_colon str =
+    try
+      let colon_index = String.index str ':' in
+      String.sub str (colon_index + 1) (String.length str - colon_index - 1)
+    with Not_found -> str  (* If no colon is found, return the original string *)
+  
+  let extract_parts_after_colon lines =
+    List.map get_after_colon lines
+  
+    let create_pair_list keys values =
+      try
+        List.combine keys values
+      with Invalid_argument _ ->
+        failwith "Lists must have the same length"
+        
+  let extract_unique_states transitions =
+  let rec aux seen acc = function
+    | [] -> List.rev acc
+    | {Transition.actual_state; Transition.key_pressed=_; Transition.next_state} :: rest ->
+        let acc, seen =
+          if IntSet.mem actual_state seen then acc, seen
+          else actual_state :: acc, IntSet.add actual_state seen
+        in
+        let acc, seen =
+          if IntSet.mem next_state seen then acc, seen
+          else next_state :: acc, IntSet.add next_state seen
+        in
+        aux seen acc rest
+  in
+  aux IntSet.empty [] transitions
   let create_automaton input_lines =
     
     let state_map = parse_key_state_mapping input_lines in
     let after_dash = extract_after_dash input_lines in
-    let combo_map = parse_input after_dash in
-    let transition_lists = transitions_from_sequences combo_map in
+    let sequences = parse_input after_dash in
+    let combo_map = extract_parts_after_colon after_dash in
+    Printf.printf "after_dash: %s\n" (String.concat ", " combo_map);
+    let transition_lists, final_states_key = transitions_from_sequences sequences in
+    let final_states = create_pair_list final_states_key combo_map in
+    let states = extract_unique_states transition_lists in
     {
       alphabet = get_automaton_alphabet state_map;
       starting_state = 0;
       actual_state = 0;
-      (* need to finish*)
-      states = [0];
-      final_states = [(0, "final_states")];
+      states = states;
+      final_states = final_states;
       transitions = transition_lists
     }
   
