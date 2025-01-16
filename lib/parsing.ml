@@ -124,39 +124,38 @@ let anon_fun arg =
     ) state_map;
     Printf.printf "-------\n"
 
-  let transitions_from_sequence sequence max_state =
-    let rec aux current_state max_state acc state_map = function
-      | [] -> List.rev acc, state_map, max_state  (* Return transitions, map, and largest state *)
-      | key :: rest ->
-          (* Print the current state map to debug *)
-          print_state_map state_map;
-          Printf.printf "Looking up (%d, \"%s\") in state_map\n" current_state key;
-  
-          (* Check if the combination (current_state, key) already exists in the map *)
-          let next_state, updated_map, updated_max =
-            match TransitionMap.find_opt (current_state, key) state_map with
-            | Some next -> 
-                Printf.printf "Found\n"; (* Debugging line to confirm the state was found *)
-                next, state_map, max_state  (* Reuse the next_state and modify if necessary *)
-            | None ->  (* Otherwise, create a new state: largest_state + 1 *)
-                Printf.printf "Not found, creating new state\n"; 
-                let next = max_state + 1 in
-                next, TransitionMap.add (current_state, key) next state_map, next
-          in
-          let transition = {Transition.actual_state = current_state; key_pressed = key; next_state} in
-          aux next_state updated_max (transition :: acc) updated_map rest
-    in
-    let transitions, _, max_state = aux 0 max_state [] TransitionMap.empty sequence in
-    transitions, max_state  (* Return both transitions and updated max_state *)
-  
-  let transitions_from_sequences sequences =
-    let _, transitions, _ =
-      List.fold_left (fun (acc_map, acc_transitions, max_state) sequence ->
-        let transitions, updated_max_state = transitions_from_sequence sequence max_state in
-        acc_map, List.rev_append transitions acc_transitions, updated_max_state
-      ) (TransitionMap.empty, [], 0) sequences
-    in
-    List.rev transitions
+    let transitions_from_sequence sequence max_state state_map =
+      let rec aux current_state max_state acc state_map = function
+        | [] -> List.rev acc, state_map, max_state  (* Return transitions, map, and largest state *)
+        | key :: rest ->
+            (* Print the current state map to debug *)
+            print_state_map state_map;
+            Printf.printf "Looking up (%d, \"%s\") in state_map\n" current_state key;
+            (* Check if the combination (current_state, key) already exists in the map *)
+            let next_state, updated_map, updated_max =
+              match TransitionMap.find_opt (current_state, key) state_map with
+              | Some next ->
+                  Printf.printf "Found\n"; (* Debugging line to confirm the state was found *)
+                  next, state_map, max_state  (* Reuse the next_state and modify if necessary *)
+              | None ->  (* Otherwise, create a new state: largest_state + 1 *)
+                  Printf.printf "Not found, creating new state\n";
+                  let next = max_state + 1 in
+                  next, TransitionMap.add (current_state, key) next state_map, next
+            in
+            let transition = {Transition.actual_state = current_state; key_pressed = key; next_state} in
+            aux next_state updated_max (transition :: acc) updated_map rest
+      in
+      aux 0 max_state [] state_map sequence
+    
+    let transitions_from_sequences sequences =
+      let _, transitions, _ =
+        List.fold_left (fun (acc_map, acc_transitions, max_state) sequence ->
+          let transitions, updated_map, updated_max_state = transitions_from_sequence sequence max_state acc_map in
+          updated_map, List.rev_append transitions acc_transitions, updated_max_state
+        ) (TransitionMap.empty, [], 0) sequences
+      in
+      List.rev transitions
+    
 
   let create_automaton input_lines =
     
@@ -164,7 +163,6 @@ let anon_fun arg =
     let after_dash = extract_after_dash input_lines in
     let combo_map = parse_input after_dash in
     let transition_lists = transitions_from_sequences combo_map in
-    List.iter Transition.print transition_lists;
     {
       alphabet = get_automaton_alphabet state_map;
       starting_state = 0;
@@ -172,11 +170,7 @@ let anon_fun arg =
       (* need to finish*)
       states = [0];
       final_states = [(0, "final_states")];
-      transitions = [
-        { Transition.actual_state = 0; Transition.key_pressed = "a"; Transition.next_state = 1 };
-        { Transition.actual_state = 1; Transition.key_pressed = "b"; Transition.next_state = 2 };
-        { Transition.actual_state = 2; Transition.key_pressed = "c"; Transition.next_state = 0 };
-      ]
+      transitions = transition_lists
     }
   
   (* Example input as a list of strings (simulating the input file) *)
