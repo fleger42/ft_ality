@@ -29,7 +29,7 @@
  (archives (byte parsing/parsing.cma) (native parsing/parsing.cmxa))
  (plugins (byte parsing/parsing.cma) (native parsing/parsing.cmxs))
  (native_archives parsing/parsing.a)
- (requires core)
+ (requires core unix)
  (main_module_name Parsing)
  (modes byte native)
  (modules
