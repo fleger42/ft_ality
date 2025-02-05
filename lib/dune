@@ -1,5 +1,5 @@
 (library
  (name parsing)
  (public_name ft_ality.parsing)
- (libraries core unix)
+ (libraries tsdl)
  (modules parsing data))

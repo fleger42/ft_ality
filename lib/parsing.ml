@@ -14,6 +14,7 @@ module TransitionMap = Map.Make(struct type t = int * string let compare = compa
 module IntMap = Map.Make(Int)
 module IntSet = Set.Make(Int)
 module StringMap = Map.Make(String)
+open Tsdl
 
 type automaton = {
   alphabet: string list;
@@ -140,21 +141,22 @@ let extract_unique_states transitions =
       Printf.printf "{{State: %d, Key: \"%s\" -> Next State: %d}}\n" state key next_state
     ) state_map;
     Printf.printf "-------\n"
+
   let transitions_from_sequence sequence max_state state_map =
     let rec aux current_state max_state acc state_map = function
       | [] -> List.rev acc, state_map, max_state  (* Return transitions, map, and largest state *)
       | key :: rest ->
           (* Print the current state map to debug *)
-          print_state_map state_map;
-          Printf.printf "Looking up (%d, \"%s\") in state_map\n" current_state key;
+          (*print_state_map state_map;*)
+          (*Printf.printf "Looking up (%d, \"%s\") in state_map\n" current_state key;*)
           (* Check if the combination (current_state, key) already exists in the map *)
           let next_state, updated_map, updated_max =
             match TransitionMap.find_opt (current_state, key) state_map with
             | Some next ->
-                Printf.printf "Found\n"; (* Debugging line to confirm the state was found *)
+                (*Printf.printf "Found\n"; (* Debugging line to confirm the state was found *)*)
                 next, state_map, max_state  (* Reuse the next_state and modify if necessary *)
             | None ->  (* Otherwise, create a new state: largest_state + 1 *)
-                Printf.printf "Not found, creating new state\n";
+                (*Printf.printf "Not found, creating new state\n";*)
                 let next = max_state + 1 in
                 next, TransitionMap.add (current_state, key) next state_map, next
           in
@@ -203,59 +205,120 @@ let read_file filename =
     Printf.printf "Error opening file: %s\n" msg;
     exit 1
 
-let detect_keypress () =
-  let original_term_io = Unix.tcgetattr Unix.stdin in
-  Unix.tcsetattr Unix.stdin Unix.TCSANOW { original_term_io with Unix.c_icanon = false; c_echo = false };
-  let key =
-    let c1 = input_char stdin in
-    if c1 = '\027' then
-      let c2 = input_char stdin in
-      if c2 = '[' then
-        match input_char stdin with
-        | 'A' -> "up"
-        | 'B' -> "down"
-        | 'C' -> "right"
-        | 'D' -> "left"
-        | _ -> ""
-      else "esc"
-    else String.make 1 c1
-  in
-  Unix.tcsetattr Unix.stdin Unix.TCSANOW original_term_io;
-  key
+    let detect_keypress () =
+      let event = Sdl.Event.create () in
+      let rec loop () =
+        if Sdl.poll_event (Some event) then
+          let event_type = Sdl.Event.get event Sdl.Event.typ in
+          if event_type = Sdl.Event.key_down then
+            let keycode = Sdl.Scancode.enum (Sdl.Event.get event Sdl.Event.keyboard_scancode) in
+            let modifiers = Sdl.Event.get event Sdl.Event.keyboard_keymod in
+    
+            (* Check if the Shift key is pressed using bitmask comparison *)
+            let is_shift_pressed = (modifiers land Sdl.Kmod.shift <> 0) in
+    
+            (* Get the key string with shift handling *)
+            let key_string = match keycode with
+              | `Up -> "up"
+              | `Down -> "down"
+              | `Left -> "left"
+              | `Right -> "right"
+              | `Escape -> "esc"
+              (* Handle alphabetic keys with Shift for uppercase *)
+              | `A -> if is_shift_pressed then "A" else "a"
+              | `B -> if is_shift_pressed then "B" else "b"
+              | `C -> if is_shift_pressed then "C" else "c"
+              | `D -> if is_shift_pressed then "D" else "d"
+              | `E -> if is_shift_pressed then "E" else "e"
+              | `F -> if is_shift_pressed then "F" else "f"
+              | `G -> if is_shift_pressed then "G" else "g"
+              | `H -> if is_shift_pressed then "H" else "h"
+              | `I -> if is_shift_pressed then "I" else "i"
+              | `J -> if is_shift_pressed then "J" else "j"
+              | `K -> if is_shift_pressed then "K" else "k"
+              | `L -> if is_shift_pressed then "L" else "l"
+              | `M -> if is_shift_pressed then "M" else "m"
+              | `N -> if is_shift_pressed then "N" else "n"
+              | `O -> if is_shift_pressed then "O" else "o"
+              | `P -> if is_shift_pressed then "P" else "p"
+              | `Q -> if is_shift_pressed then "Q" else "q"
+              | `R -> if is_shift_pressed then "R" else "r"
+              | `S -> if is_shift_pressed then "S" else "s"
+              | `T -> if is_shift_pressed then "T" else "t"
+              | `U -> if is_shift_pressed then "U" else "u"
+              | `V -> if is_shift_pressed then "V" else "v"
+              | `W -> if is_shift_pressed then "W" else "w"
+              | `X -> if is_shift_pressed then "X" else "x"
+              | `Y -> if is_shift_pressed then "Y" else "y"
+              | `Z -> if is_shift_pressed then "Z" else "z"
+              | `Lshift -> ""
+              | _ -> ""  (* For non-alphabetic keys *)
+            in
+            key_string  (* Return the key string *)
+    
+          else loop ()  (* Continue looping if not a keydown event *)
+        else loop ()  (* If no event, continue polling *)
+      in
+      loop ()
+    
 
 let find_transition key transitions actual_state =
   List.find_opt (fun t -> t.Transition.key_pressed = key && t.actual_state = actual_state) transitions
   
   let rec execution automaton input_map =
-    print_automaton_transitions automaton; flush stdout;
     let key = detect_keypress () in
-    Printf.printf "Pressed [%s]\n" key; flush stdout;
-    let key_action = match StringMap.find_opt key input_map with
-      | Some value -> value
-      | None -> "" 
-    in
-    let next_state =
-      match find_transition key_action automaton.transitions automaton.actual_state with
-      | Some t -> 
-          Printf.printf "%d -> %d \n" automaton.actual_state t.next_state ; flush stdout;
-          t.next_state
-      | None -> automaton.starting_state
-      in 
-    let updated_automaton = {
-      alphabet = automaton.alphabet;
-      starting_state = automaton.starting_state;
-      actual_state = next_state;
-      states = automaton.states;
-      final_states = automaton.final_states;
-      transitions = automaton.transitions;
-    } in
-    execution updated_automaton input_map
+    if key = "" then
+      execution automaton input_map
+    else if key != "esc" then
+      (* If the key isn't ESC, continue processing the input *)
+      begin
+        Printf.printf "Pressed [%s]\n" key; 
+        flush stdout;
+  
+        let key_action = match StringMap.find_opt key input_map with
+          | Some value -> value
+          | None -> "" 
+        in
+  
+        let next_state =
+          match find_transition key_action automaton.transitions automaton.actual_state with
+          | Some t -> 
+              Printf.printf "%d -> %d \n" automaton.actual_state t.next_state; 
+              flush stdout;
+              t.next_state
+          | None -> automaton.starting_state
+        in 
+  
+        let updated_automaton = {
+          alphabet = automaton.alphabet;
+          starting_state = automaton.starting_state;
+          actual_state = next_state;
+          states = automaton.states;
+          final_states = automaton.final_states;
+          transitions = automaton.transitions;
+        } in
+        execution updated_automaton input_map
+      end
+    else 
+      begin
+        Printf.printf "Exiting program...\n"; 
+        flush stdout;
+        Sdl.quit ();
+      end
     
   
 let parse () =
   Arg.parse speclist anon_fun usage_msg;
   if !args_value = "" || Array.length Sys.argv > 2 then (print_endline usage_msg; exit 1);
-  let input_lines = read_file !args_value in
-  let automaton = create_automaton input_lines in
-  (*print_automaton_data automaton; flush stdout;*)
-  execution automaton (create_map (parse_key_state_mapping input_lines))
+  match Sdl.init Sdl.Init.video with
+  | Error (`Msg e) -> failwith ("SDL Initialization Error: " ^ e)
+  | Ok () ->
+      match Sdl.create_window "Invisible Window" ~w:1 ~h:1 Sdl.Window.opengl with
+      | Error (`Msg e) -> failwith ("Window creation failed: " ^ e)
+      | Ok _window ->
+          let input_lines = read_file !args_value in
+          let automaton = create_automaton input_lines in
+          List.iter (fun str -> Printf.printf "%s\n" str) input_lines;
+          Printf.printf "Press an arrow key (ESC to exit)...\n";
+          flush stdout;
+          execution automaton (create_map (parse_key_state_mapping input_lines))
