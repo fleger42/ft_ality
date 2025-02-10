@@ -265,6 +265,9 @@ let read_file filename =
 let find_transition key transitions actual_state =
   List.find_opt (fun t -> t.Transition.key_pressed = key && t.actual_state = actual_state) transitions
   
+let is_final_state state final_states =
+  List.assoc_opt state final_states;;
+  
   let rec execution automaton input_map =
     let key = detect_keypress () in
     if key = "" then
@@ -285,10 +288,20 @@ let find_transition key transitions actual_state =
           | Some t -> 
               Printf.printf "%d -> %d \n" automaton.actual_state t.next_state; 
               flush stdout;
-              t.next_state
+              let check_final_state =
+                match is_final_state t.next_state automaton.final_states with
+                | Some s -> 
+                    Printf.printf "[%s] Combo !\n" s; 
+                    flush stdout;
+                    s
+                | None -> ""
+                in
+                if (check_final_state != "") then
+                  automaton.starting_state
+                else
+                t.next_state
           | None -> automaton.starting_state
-        in 
-  
+        in
         let updated_automaton = {
           alphabet = automaton.alphabet;
           starting_state = automaton.starting_state;
