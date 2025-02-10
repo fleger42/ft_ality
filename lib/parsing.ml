@@ -148,13 +148,12 @@ let extract_unique_states transitions =
       | [] -> List.rev acc, state_map, max_state  (* Return transitions, map, and largest state *)
       | key :: rest ->
           (* Print the current state map to debug *)
-          print_state_map state_map;
-          Printf.printf "Looking up (%d, \"%s\") in state_map\n" current_state key;
+          (*print_state_map state_map;*)
+          (*Printf.printf "Looking up (%d, \"%s\") in state_map\n" current_state key;*)
           (* Check if the combination (current_state, key) already exists in the map *)
           let next_state, updated_map, updated_max =
             match TransitionMap.find_opt (current_state, key) state_map with
             | Some next ->
-                Printf.printf "Found\n"; (* Debugging line to confirm the state was found *)
                 next, state_map, max_state  (* Reuse the next_state and modify if necessary *)
             | None ->  (* Otherwise, create a new state: largest_state + 1 *)
                 (*Printf.printf "Not found, creating new state\n";*)
@@ -277,14 +276,13 @@ let check_multiple_combo key_action transitions next_state =
   
   let rec execution automaton input_map =
     let key = detect_keypress () in
+    Printf.printf "Pressed key %s\n" key; 
+    flush stdout;
     if key = "" then
       execution automaton input_map
     else if key != "esc" then
       (* If the key isn't ESC, continue processing the input *)
       begin
-        Printf.printf "Pressed [%s]\n" key; 
-        flush stdout;
-  
         let key_action = match StringMap.find_opt key input_map with
           | Some value -> value
           | None -> "" 
@@ -293,21 +291,26 @@ let check_multiple_combo key_action transitions next_state =
         let next_state =
           match find_transition key_action automaton.transitions automaton.actual_state with
           | Some t -> 
-              Printf.printf "%d -> %d \n" automaton.actual_state t.next_state; 
-              flush stdout;
               let check_final_state =
                 match is_final_state t.next_state automaton.final_states with
                 | Some s -> 
-                    Printf.printf "[%s] Combo ! %d\n" s t.next_state; 
-                    flush stdout;
+                  Printf.printf "[%s] Combo ! %d\n" s t.next_state; 
+                  flush stdout;
                     s
                 | None -> ""
                 in
                 if (check_final_state <> "" && (check_multiple_combo key_action automaton.transitions t.next_state) == false) then
+                begin
+                  Printf.printf "Reset..\n";
+                  flush stdout;
                   automaton.starting_state
+                end
                 else
-                t.next_state
-          | None -> automaton.starting_state
+                  t.next_state
+          | None ->
+            Printf.printf "Reset..\n"; 
+            flush stdout; 
+            automaton.starting_state
         in
         let updated_automaton = {
           alphabet = automaton.alphabet;
@@ -340,6 +343,5 @@ let parse () =
           let automaton = create_automaton input_lines in
           List.iter (fun str -> Printf.printf "%s\n" str) input_lines;
           Printf.printf "Press an arrow key (ESC to exit)...\n";
-          print_automaton_data automaton;
           flush stdout;
           execution automaton (create_map (parse_key_state_mapping input_lines))

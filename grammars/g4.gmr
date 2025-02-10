@@ -1,7 +1,7 @@
 left:<-
-right: ->
-up: ^
-down: v
+right:->
+up:^
+down:v
 a:Light_Punch
 z:Heavy_Punch
 e:Fireball
