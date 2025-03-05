@@ -25,7 +25,7 @@ let usage_msg =
   "  optional arguments:\n" ^
   "    -h                show this help message and exit"
 
-(*
+
 let print_automaton_alphabet automaton =
   Printf.printf "Alphabet: %s\n" (String.concat ", " automaton.alphabet)
 
@@ -43,9 +43,13 @@ let print_automaton_final_state automaton =
     (String.concat ", "
        (List.map (fun (s, label) -> Printf.sprintf "(%d, %s)" s label) automaton.final_states))
 
+let print_transition (transition: Transition.transition) =
+ Printf.printf "(%d %s %d);\n"
+   transition.actual_state transition.key_pressed transition.next_state
+
 let print_automaton_transitions automaton =
   Printf.printf "Transitions:\n";
-  List.iter Transition.print automaton.transitions
+  List.iter print_transition automaton.transitions
 
 let print_automaton_data automaton =
   Printf.printf "Automaton data:\n";
@@ -57,7 +61,7 @@ let print_automaton_data automaton =
   print_automaton_actual_state automaton;
   print_automaton_transitions automaton;
   Printf.printf "---------------------------\n";
-  flush stdout*)
+  flush stdout
 
 let parse_key_state_mapping lines =
   let rec parse lines acc =
@@ -232,16 +236,20 @@ let read_file filename =
       in
       loop ()
     
-
+let check_multiple_combo actual_state transitions = 
+  let combo_count =
+    List.filter (fun t -> t.Transition.actual_state = actual_state) transitions
+  in
+  List.length combo_count > 1
 let find_transition key_action transitions actual_state =
   List.find_opt (fun t -> t.Transition.key_pressed = key_action && t.actual_state = actual_state) transitions
   
-let is_final_state state final_states =
-  List.assoc_opt state final_states
+let get_final_states state final_states =
+  List.filter (fun (s, _) -> s = state) final_states
   
-let check_multiple_combo key_action transitions next_state =
+let check_next_combo key_action transitions next_state =
     let matching_transitions =
-      List.filter (fun t -> t.Transition.key_pressed = key_action && t.next_state = next_state) transitions
+      List.filter (fun t -> t.Transition.key_pressed = key_action && t.next_state = next_state && (check_multiple_combo next_state transitions == true)) transitions
     in
     List.length matching_transitions > 1
 let find_key_action key_to_check input_map =
@@ -264,19 +272,20 @@ let rec execution automaton input_map =
         match find_transition key_action automaton.transitions automaton.actual_state with
         | Some t -> 
             let check_final_state =
-              match is_final_state t.next_state automaton.final_states with
-              | Some s -> 
-                print_string "[";
-                print_string s;
-                print_string "]";
-                print_string " Combo ! ";
-                print_int t.next_state;
-                print_endline "";
-                flush stdout;
+              match get_final_states t.next_state automaton.final_states with
+              | s ->
+                List.iter (fun (_, combo_name) -> 
+
+                    print_string "[";
+                    print_string combo_name;
+                    print_string "]";
+                    print_string " Combo ! ";
+                    print_endline "";
+                    flush stdout;
+                ) s;
                   s
-              | None -> ""
               in
-              if (check_final_state <> "" && (check_multiple_combo key_action automaton.transitions t.next_state) == false) then
+              if (check_final_state <> [] && (check_next_combo key_action automaton.transitions t.next_state) == false) then
               begin
                 print_endline "Reset..";
                 flush stdout;
@@ -318,6 +327,7 @@ let init filename =
           List.iter (fun str -> print_endline str) input_lines;
           print_endline "Press an arrow key (ESC to exit)...";
           flush stdout;
+          print_automaton_data automaton;
           execution automaton (create_map (parse_key_state_mapping input_lines))
 
 let () =
