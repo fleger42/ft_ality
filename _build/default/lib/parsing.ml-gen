@@ -2,6 +2,3 @@
 
 (** @canonical Parsing.Data *)
 module Data = Parsing__Data
-
-module Parsing__ = struct end
-[@@deprecated "this module is shadowed"]

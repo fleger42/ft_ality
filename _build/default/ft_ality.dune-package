@@ -14,10 +14,6 @@
    parsing/parsing.cmx
    parsing/parsing.cmxa
    parsing/parsing.ml
-   parsing/parsing__.cmi
-   parsing/parsing__.cmt
-   parsing/parsing__.cmx
-   parsing/parsing__.ml
    parsing/parsing__Data.cmi
    parsing/parsing__Data.cmt
    parsing/parsing__Data.cmx))
@@ -36,18 +32,14 @@
   (wrapped
    (group
     (alias
-     (obj_name parsing__)
+     (obj_name parsing)
      (visibility public)
      (kind alias)
-     (source (path Parsing__) (impl (path parsing/parsing__.ml-gen))))
+     (source (path Parsing) (impl (path parsing/parsing.ml-gen))))
     (name Parsing)
     (modules
      (module
       (obj_name parsing__Data)
       (visibility public)
-      (source (path Data) (impl (path parsing/data.ml))))
-     (module
-      (obj_name parsing)
-      (visibility public)
-      (source (path Parsing) (impl (path parsing/parsing.ml))))))
+      (source (path Data) (impl (path parsing/data.ml))))))
    (wrapped true))))

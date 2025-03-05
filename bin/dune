@@ -1,4 +1,5 @@
 (executable
  (public_name ft_ality)
  (name main)
- (libraries parsing tsdl))
+ (libraries tsdl parsing)
+ )

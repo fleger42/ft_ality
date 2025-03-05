@@ -2,4 +2,4 @@
  (name parsing)
  (public_name ft_ality.parsing)
  (libraries tsdl)
- (modules parsing data))
+ (modules data))

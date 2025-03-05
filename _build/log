@@ -1,9 +1,9 @@
 # dune build
 # OCAMLPARAM: unset
 # Shared cache: enabled-except-user-rules
-# Shared cache location: /home/kali/.cache/dune/db
-# Workspace root: /home/kali/Desktop/ft_ality
-# Auto-detected concurrency: 2
+# Shared cache location: /home/fleger/.cache/dune/db
+# Workspace root: /goinfre/fleger/ft_ality
+# Auto-detected concurrency: 4
 # Dune context:
 #  { name = "default"
 #  ; kind = "default"
@@ -13,4 +13,6 @@
 #  ; build_dir = In_build_dir "default"
 #  ; instrument_with = []
 #  }
-$ /home/kali/.opam/cs3110-2024fa/bin/ocamlc.opt -config > /tmp/dune_cabf21_output
+$ /home/fleger/.opam/cs3110-2025sp/bin/ocamlc.opt -config > /tmp/dune_640b96_output
+$ (cd _build/default && /home/fleger/.opam/cs3110-2025sp/bin/ocamlopt.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -I bin/.main.eobjs/byte -I bin/.main.eobjs/native -I /home/fleger/.opam/cs3110-2025sp/lib/bigarray-compat -I /home/fleger/.opam/cs3110-2025sp/lib/ctypes -I /home/fleger/.opam/cs3110-2025sp/lib/ctypes-foreign -I /home/fleger/.opam/cs3110-2025sp/lib/integers -I /home/fleger/.opam/cs3110-2025sp/lib/ocaml/threads -I /home/fleger/.opam/cs3110-2025sp/lib/ocaml/unix -I /home/fleger/.opam/cs3110-2025sp/lib/stdlib-shims -I /home/fleger/.opam/cs3110-2025sp/lib/tsdl -I lib/.parsing.objs/byte -I lib/.parsing.objs/native -intf-suffix .ml -no-alias-deps -opaque -o bin/.main.eobjs/native/dune__exe__Main.cmx -c -impl bin/main.ml)
+$ (cd _build/default && /home/fleger/.opam/cs3110-2025sp/bin/ocamlopt.opt -w @1..3@5..28@31..39@43@46..47@49..57@61..62@67@69-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -o bin/main.exe /home/fleger/.opam/cs3110-2025sp/lib/stdlib-shims/stdlib_shims.cmxa /home/fleger/.opam/cs3110-2025sp/lib/integers/integers.cmxa -I /home/fleger/.opam/cs3110-2025sp/lib/integers /home/fleger/.opam/cs3110-2025sp/lib/bigarray-compat/bigarray_compat.cmxa /home/fleger/.opam/cs3110-2025sp/lib/ctypes/ctypes.cmxa -I /home/fleger/.opam/cs3110-2025sp/lib/ctypes /home/fleger/.opam/cs3110-2025sp/lib/ocaml/unix/unix.cmxa /home/fleger/.opam/cs3110-2025sp/lib/ocaml/threads/threads.cmxa /home/fleger/.opam/cs3110-2025sp/lib/ctypes-foreign/ctypes_foreign.cmxa -I /home/fleger/.opam/cs3110-2025sp/lib/ctypes-foreign /home/fleger/.opam/cs3110-2025sp/lib/tsdl/tsdl.cmxa -I /home/fleger/.opam/cs3110-2025sp/lib/tsdl lib/parsing.cmxa bin/.main.eobjs/native/dune__exe__Main.cmx)
