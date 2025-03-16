@@ -236,22 +236,17 @@ let read_file filename =
       in
       loop ()
     
-let check_multiple_combo actual_state transitions = 
-  let combo_count =
-    List.filter (fun t -> t.Transition.actual_state = actual_state) transitions
-  in
-  List.length combo_count > 1
 let find_transition key_action transitions actual_state =
   List.find_opt (fun t -> t.Transition.key_pressed = key_action && t.actual_state = actual_state) transitions
   
 let get_final_states state final_states =
   List.filter (fun (s, _) -> s = state) final_states
   
-let check_next_combo key_action transitions next_state =
+let check_next_combo transitions next_state =
     let matching_transitions =
-      List.filter (fun t -> t.Transition.key_pressed = key_action && t.next_state = next_state && (check_multiple_combo next_state transitions == true)) transitions
+      List.filter (fun t -> t.Transition.actual_state = next_state) transitions
     in
-    List.length matching_transitions > 1
+    List.length matching_transitions >= 1
 let find_key_action key_to_check input_map =
   List.find_opt (fun (key, _) -> key_to_check = key) input_map
 
@@ -285,7 +280,7 @@ let rec execution automaton input_map =
                 ) s;
                   s
               in
-              if (check_final_state <> [] && (check_next_combo key_action automaton.transitions t.next_state) == false) then
+              if (check_final_state <> [] && (check_next_combo automaton.transitions t.next_state) == false) then
               begin
                 print_endline "Reset..";
                 flush stdout;

@@ -8,5 +8,8 @@ l:Block
 -
 A,A,D:Uppercut
 A,A,D:Roundhouse Kick
+A,A,D,D:Supercut
+A,A,D,D:Hypercut
+A,A,D,D:Megacut
 W,A,W:Dive Punch
 A,D:Combo Strike
